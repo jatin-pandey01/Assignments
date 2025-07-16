@@ -3,6 +3,8 @@ package com.aurionpro.controller;
 import java.util.Scanner;
 
 import com.aurionpro.interfaces.IMenu;
+import com.aurionpro.model.DeliveryPartner;
+import com.aurionpro.model.DeliveryPartners;
 import com.aurionpro.model.IndianMenu;
 import com.aurionpro.model.ItalianMenu;
 import com.aurionpro.model.User;
@@ -11,9 +13,11 @@ public class AdminController {
 	private User user;
 	private IMenu menu;
 	Scanner scanner = new Scanner(System.in);
+	private DeliveryPartners deliveryPartners;
 	
 	public AdminController(User user) {
 		this.user = user;
+		deliveryPartners = new DeliveryPartners();
 	}
 	
 	public void display() {
@@ -21,13 +25,13 @@ public class AdminController {
 			System.out.println("Welcome " + user.getName());
 			while(true) {
 				System.out.println("\nPlease select any number from below :: ");
-				System.out.println("\n1. Indian Menu\n2. Italian Menu\n3. Add food in Indian Menu\n4. Add food in Italian Menu\n5. Remove food \n6. Logout");
+				System.out.println("\n1. Indian Menu\n2. Italian Menu\n3. Add food in Indian Menu\n4. Add food in Italian Menu\n5. Remove food \n6. Show Delivery Agents\n7. Add Delivery Agents\n8. Remove Delivery agent \n9. Logout");
 				int input = scanner.nextInt();
-				if(input < 0 || input > 6) {
+				if(input < 0 || input > 9) {
 					System.out.println("Wrong input!!!");
 					continue;
 				}
-				if(input == 6) {
+				if(input == 9) {
 					return;
 				}
 				
@@ -49,6 +53,16 @@ public class AdminController {
 				}
 				if(input == 5) {
 					removeMenu();
+					continue;
+				}
+				if(input == 6) {
+					showDeliveryPartner();
+				}
+				else if(input == 7) {
+					addDeliveryPartner();
+				}
+				else if(input == 8) {
+					removeDeliveryPartner();
 				}
 				
 			}
@@ -97,4 +111,22 @@ public class AdminController {
 		menu.removeFood(id);
 	}
 	
+	public void addDeliveryPartner() {
+		System.out.println("Enter delivery partner name : ");
+		String name = scanner.next();
+		deliveryPartners.addDeliveryPartners(new DeliveryPartner(name));
+	}
+	
+	public void removeDeliveryPartner() {
+		System.out.println("Enter delivery partner name : ");
+		String name = scanner.next();
+		deliveryPartners.removerDeliveryPartner(name);
+	}
+	
+	public void showDeliveryPartner() {
+		int index = 1;
+		for(DeliveryPartner deliveryPartner:deliveryPartners.getDeliveryPartners()) {
+			System.out.println((index++) + ". " + deliveryPartner.getName());
+		}
+	}
 }
