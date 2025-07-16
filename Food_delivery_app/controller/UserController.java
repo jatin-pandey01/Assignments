@@ -6,10 +6,13 @@ import java.util.Map.Entry;
 import java.util.Scanner;
 
 import com.aurionpro.exceptions.CardException;
+import com.aurionpro.exceptions.UpiException;
 import com.aurionpro.interfaces.IMenu;
 import com.aurionpro.interfaces.IPayment;
 import com.aurionpro.model.CreditCard;
 import com.aurionpro.model.DebitCard;
+import com.aurionpro.model.DeliveryPartner;
+import com.aurionpro.model.DeliveryPartners;
 import com.aurionpro.model.Food;
 import com.aurionpro.model.FoodItem;
 import com.aurionpro.model.IndianMenu;
@@ -26,6 +29,7 @@ public class UserController {
 	private Order order;
 	private double totalPrice, discountPrice;
 	Scanner scanner = new Scanner(System.in);
+	private List<DeliveryPartner> deliveryPartners;
 	
 	public UserController(User user) {
 		mapOfOrderWithQuantity = new HashMap<>();
@@ -34,6 +38,7 @@ public class UserController {
 		this.user = user;
 		totalPrice = 0;
 		discountPrice = 0;
+		deliveryPartners = new DeliveryPartners().getDeliveryPartners();
 	}
 	
 	public void display() {
@@ -148,26 +153,23 @@ public class UserController {
 		for(Entry<Integer, Integer> it:mapOfOrderWithQuantity.entrySet()) {
 			Food food = menu.getIdFood(it.getKey());
 			System.out.printf("%-5s %-20s %-15s %-10s ₹%-8.2f %.1f%%    X     %d\n",food.getId(), food.getName(),food.getCategory(),food.getMeal(),food.getPrice(),food.getDiscount(),it.getValue());
-//			System.out.println(food.getName() + "\t" + it.getValue());
 		}
 	}
 	
 	public void checkOut(){
-		Order order = new Order();
+		order = new Order();
 		System.out.printf("\n%-5s %-20s %-15s %-10s %-8.2s %-10s %-10s\n","ID","Name","Category","Meal","Price","Discount","Quantity");
 		for(Entry<Integer, Integer> it:mapOfOrderWithQuantity.entrySet()) {
 			Food food = menu.getIdFood(it.getKey());
 			order.addFood(food, it.getValue());
-			totalPrice += food.getPrice();
-			discountPrice += (food.getDiscount() * food.getPrice()) / 100;
+			totalPrice += (food.getPrice() * it.getValue());
 			System.out.printf("%-5s %-20s %-15s %-10s ₹%-8.2f %.1f%%         %d\n",food.getId(), food.getName(),food.getCategory(),food.getMeal(),food.getPrice(),food.getDiscount(),it.getValue());
 		}
 		user.addOrder(order);
 		System.out.println("\nTotal amount :: " + totalPrice);
+		discountPrice = (totalPrice >= 500 ? (0.15 * totalPrice) : 0);
 		System.out.println("Discount amount :: " + discountPrice);
 		System.out.println("Net amount :: " + (totalPrice-discountPrice));
-//		System.out.println("GST (5% tax) : " + ((5*(totalPrice-discountPrice))/100));
-//		System.out.println("After tax total amount : " + ((totalPrice-discountPrice) + ((5*(totalPrice-discountPrice))/100)));
 		while(true) {
 			if(payment((totalPrice-discountPrice) + ((5*(totalPrice-discountPrice))/100))) {
 				break;
@@ -188,15 +190,16 @@ public class UserController {
 			if(input == 1) {
 				System.out.println("\nDebit card number : ");
 				String cardNumber = scanner.next();
-				if(cardNumber.length() != 12) {
-					throw new CardException("Debit Card number must be of 12 digit.");
-				}
 				System.out.println("Debit card holder name(Only first name) : ");
 				String name = scanner.next();
 				System.out.println("Expiry date (in DD/MM format) : ");
 				String expiryDate = scanner.next();
 				System.out.println("CVV number : ");
 				String cvv = scanner.next();
+				
+				if(cardNumber.length() != 16) {
+					throw new CardException("Invalid Card! Debit Card number must be of 16 digit.");
+				}
 				
 				payment = new DebitCard(cardNumber, name, expiryDate, cvv);
 				payment.pay(amount);
@@ -211,6 +214,10 @@ public class UserController {
 				System.out.println("CVV number : ");
 				String cvv = scanner.next();
 				
+				if(cardNumber.length() != 16) {
+					throw new CardException("Invalid Card! Credit Card number must be of 16 digit.");
+				}
+				
 				payment = new CreditCard(cardNumber, name, expiryDate, cvv);
 				payment.pay(amount);
 			}
@@ -220,6 +227,10 @@ public class UserController {
 				System.out.println("Enter upi holder name : ");
 				String name = scanner.next();
 				
+				if(!upiId.contains("@ok")) {
+					throw new UpiException();
+				}
+				
 				payment = new UpiPayment(upiId, name);
 				payment.pay(amount);
 			}
@@ -228,21 +239,22 @@ public class UserController {
 			System.out.println("Delivery Rider Assigned: Ramesh Yadav");
 			System.out.println("Rider Contact: +91-9876123456");
 			System.out.println("Vehicle Number: DL01AB1234");
-			System.out.println("Delivery Partner: Rapido");
+			int index = (int) Math.random() * (deliveryPartners.size()-1 - 0 + 1);
+			System.out.println("Delivery Partner: " + deliveryPartners.get(index).getName());
 			System.out.println("Estimated Delivery Time: 45 minutes");
 			long time = 5000;
 			Thread.sleep(time);
 			System.out.println("Delivered!!!\nEnjoy your meal!");
+			
+			System.out.println("Hello => " + order.getFoods().size());
 			Invoice invoice = new Invoice(order, user);
 			invoice.getInvoice(totalPrice, discountPrice);
+			order = null;
+			order = new Order();
 			return true;
 		} catch (Exception e) {
 			System.out.println(e.getLocalizedMessage());
 			return false;
-		}
-		finally {
-			order = null;
-			order = new Order();
 		}
 		
 	}
