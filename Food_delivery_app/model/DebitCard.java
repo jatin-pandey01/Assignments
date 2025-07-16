@@ -16,7 +16,7 @@ public class DebitCard implements IPayment {
 
 	@Override
 	public void pay(double amount) {
-		System.out.println("Payment of " + amount + "rs done through XXXX-XXXX-" + cardNumber.substring(8) +" debit card.");
+		System.out.println("Payment of " + amount + "rs done through XXXX-XXXX-XXXX-" + cardNumber.substring(12) +" debit card.");
 	}
 
 }
